@@ -4,16 +4,18 @@ import backend.com.backend.answer.dto.AnswerDto;
 import backend.com.backend.answer.entity.Answer;
 import backend.com.backend.answer.mapper.AnswerMapper;
 import backend.com.backend.answer.service.AnswerService;
+import backend.com.backend.auth.userdetails.MemberDetailsService;
 import backend.com.backend.question.dto.QuestionDto;
 import backend.com.backend.question.entity.Question;
 import backend.com.backend.question.mapper.QuestionMapper;
 import backend.com.backend.question.service.QuestionService;
 import backend.com.backend.response.PageInfo;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -28,7 +30,6 @@ import static java.util.Comparator.comparing;
 
 @RestController
 @RequestMapping("/questions/{id}/answers")
-// /users/{user-id}/answers
 @Validated
 @Slf4j
 @CrossOrigin(origins = "*")
@@ -38,24 +39,31 @@ public class AnswerController {
     private final AnswerService answerService;
 
     private final QuestionService questionService;
+    private final MemberDetailsService memberDetailsService;
     private final AnswerMapper answerMapper;
     private final QuestionMapper questionMapper;
-    @Autowired
-    public AnswerController(AnswerService answerService, QuestionService questionService, AnswerMapper answerMapper, QuestionMapper questionMapper) {
+
+    public AnswerController(AnswerService answerService, QuestionService questionService, MemberDetailsService memberDetailsService, AnswerMapper answerMapper, QuestionMapper questionMapper) {
         this.answerService = answerService;
         this.questionService = questionService;
+        this.memberDetailsService = memberDetailsService;
         this.answerMapper = answerMapper;
         this.questionMapper = questionMapper;
     }
 
     @PostMapping
         public ResponseEntity postAnswer (@PathVariable("id") long questionId,
-                                          @Valid @RequestBody AnswerDto.Post requestBody){
+                                          @Valid @RequestBody AnswerDto.Post requestBody,
+                                          Authentication authentication){
+        //아래 두 줄의 코드는 인증정보 Authentication을 바탕으로 유저 정보를 끌어낸다.
+        String username = authentication.getName();
+        UserDetails user = memberDetailsService.loadUserByUsername(username);
+        //이제 Question과의 관계설정차례
+        //답변 상위의 관련된 질문객체를 생성
+        Question relatedQuestion = questionService.findByQuestionId(questionId);
 
-            Answer answer = answerMapper.answerPostDtoToAnswer(requestBody);
-            Question relatedQuestion = questionService.findQuestion(questionId);
-            relatedQuestion.setAnswer(answer);
-            Answer createdAnswer = answerService.createAnswer(answer);
+        //그리고는 service단으로 넘어가서 답변이 save()되기 전 Member 외래키 필드를 채워주는 역할을 한다.
+            Answer createdAnswer = answerService.createAnswer(relatedQuestion, answerMapper.answerPostDtoToAnswer(requestBody), user);
 
             URI location = UriComponentsBuilder
                     .newInstance()
@@ -66,6 +74,7 @@ public class AnswerController {
             return ResponseEntity.created(location).build();
 
         }
+
 
     @PatchMapping("/{answer-id}")
     public ResponseEntity patchAnswer(@PathVariable("answer-id") @Positive long answerId,

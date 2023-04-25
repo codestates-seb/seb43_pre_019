@@ -4,12 +4,12 @@ import backend.com.backend.answer.entity.Answer;
 import backend.com.backend.answer.repository.AnswerRepository;
 import backend.com.backend.exception.BusinessLogicException;
 import backend.com.backend.exception.ExceptionCode;
+import backend.com.backend.member.entity.Member;
 import backend.com.backend.member.repository.MemberRepository;
-import backend.com.backend.question.repository.QuestionRepository;
-import backend.com.backend.question.service.QuestionService;
+import backend.com.backend.question.entity.Question;
 import backend.com.backend.utils.CustomBeanUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.*;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,21 +20,28 @@ import java.util.Optional;
 @Service
 public class AnswerService {
     private final AnswerRepository answerRepository;
+    private final MemberRepository memberRepository;
     private final CustomBeanUtils<Answer> beanUtils;
-    @Autowired
-    public AnswerService(AnswerRepository answerRepository, CustomBeanUtils<Answer> beanUtils) {
+
+    public AnswerService(AnswerRepository answerRepository, MemberRepository memberRepository, CustomBeanUtils<Answer> beanUtils) {
         this.answerRepository = answerRepository;
+        this.memberRepository = memberRepository;
         this.beanUtils = beanUtils;
     }
 
-    public Answer createAnswer(Answer answer) {
-        //Answer 엔티티의 Quesition필드를 세팅한다.
-        //relatedQuestion.setAnswer(answer);
-        //vice versa로 상위 질문 엔티티의 Answer 필드를 세팅한다.
-        //questionRepository.save(relatedQuestion);
-        //QuestionRepository객체를 이용해 Question 테이블에 질문 엔티티의 변경사항을 저장한다.
+    public Answer createAnswer(Question question, Answer answer, UserDetails user) {
+        Optional<Member> member = memberRepository.findByEmail(user.getUsername());
+        Member findMember = member.orElseThrow(() -> new BusinessLogicException(ExceptionCode.MEMBER_NOT_FOUND));
+        //answer필드를 findMember를 통해 쌍방으로 세팅해준다.
+        findMember.setAnswer(answer);
+        //한편 Question 테이블엔 answers 리스트가 반영이 아직 안되었으니 세팅하자
+        question.setAnswer(answer); //이러면 Answer테이블에 있는 question 외래키 또한 세팅된다.
+        //Answer 테이블에 있는 글쓴이 필드를 세팅해준다.
+        answer.setWrittenBy(findMember.getDisplayName());
+        // memberRepository.save()를 하면 의존성에 의해 같은 내용의 엔티티가 두 번 등록되고 애꿎은
+        //PK만 올라간다. 그러니 밑에 코드 한번으로도 충분하다. 저러면
+        //Member 엔티티와 Answer엔티티 모두 영속성 컨텍스트에 저장되고 DB반영된다.
         return answerRepository.save(answer);
-        //vice versa로 Answer 테이블에 답변 엔티티의 변경사항을 저장하고 Controller단으로 리턴한다.
     }
 
     public Answer updateAnswer(Answer answer) {
@@ -63,6 +70,8 @@ public class AnswerService {
     }
 
     public void clearAnswer(long answerId) {
+        Member findMember = findVerifiedAnswer(answerId).getMember();
+        findMember.setTotalAnswers(findMember.getTotalAnswers() - 1);
         answerRepository.delete(findVerifiedAnswer(answerId));
     }
 

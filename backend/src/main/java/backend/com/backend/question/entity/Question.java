@@ -3,6 +3,7 @@ package backend.com.backend.question.entity;
 import backend.com.backend.answer.entity.Answer;
 import backend.com.backend.audit.Auditable;
 import backend.com.backend.member.entity.Member;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -28,6 +29,9 @@ public class Question extends Auditable {
     @Column(nullable = false, length = 7000)
     private String body;
 
+    @Column
+    private String writtenBy;
+
     @JsonManagedReference("question-answers")
     @OneToMany(mappedBy = "question", cascade = CascadeType.ALL, orphanRemoval = true)
     //질문 삭제시 그에 딸린 답변들도 모두 삭제하기 위해 cascade를 지정해놓음
@@ -39,8 +43,9 @@ public class Question extends Auditable {
             answer.setQuestion(this);
         }
     }
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "MEMBER_ID")
+    @JsonBackReference
     private Member member;
 
 }

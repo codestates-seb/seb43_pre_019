@@ -6,6 +6,8 @@ import javax.persistence.*;
 import backend.com.backend.answer.entity.Answer;
 import backend.com.backend.audit.Auditable;
 import backend.com.backend.question.entity.Question;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -27,7 +29,7 @@ public class Member extends Auditable {
     private String fullName;
     @Column(nullable = false)
     private String displayName;
-    @Column(nullable = false, updatable = false)
+    @Column(nullable = false, length = 100)
     private String password;
     @Column(updatable = false)
     private String location;
@@ -36,6 +38,10 @@ public class Member extends Auditable {
     private int totalQuestions;
     @Column
     private int totalAnswers;
+
+    @ElementCollection(fetch = FetchType.EAGER)
+    private List<String> roles = new ArrayList<>();
+
     @Enumerated(value=EnumType.STRING)
     @Column(nullable = false)
     private MemberStatus memberStatus = MemberStatus.MEMBER_ACTIVE;
@@ -47,20 +53,24 @@ public class Member extends Auditable {
 //
 //    @OneToMany(mappedBy ="user")
 //    private List<Comment> comment;
-    @OneToMany(mappedBy = "member")
+    @OneToMany(mappedBy = "member", cascade = CascadeType.ALL)
+    @JsonManagedReference
     private List<Question> questions = new ArrayList<>();
 
     public void setQuestion(Question question) {
         questions.add(question);
+        totalQuestions++;
         if(question.getMember() != this){
             question.setMember(this);
         }
     }
-    @OneToMany(mappedBy = "member")
+    @OneToMany(mappedBy = "member", cascade = CascadeType.ALL)
+    @JsonManagedReference
     private List<Answer> answers = new ArrayList<>();
 
     public void setAnswer(Answer answer) {
         answers.add(answer);
+        totalAnswers++;
         if(answer.getMember() != this){
             answer.setMember(this);
         }

@@ -17,7 +17,7 @@ public class MemberPostDto {
     private String displayName;
     @Column(nullable = false)
     private String fullName;
-    @Column(nullable = false, updatable = false)
+    @Column
     private String password;
     @Column(updatable = false)
     private String location;

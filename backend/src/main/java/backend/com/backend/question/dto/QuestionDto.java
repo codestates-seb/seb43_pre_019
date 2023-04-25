@@ -49,6 +49,7 @@ public class QuestionDto {
         private Long id;
         private String title;
         private String body;
+        private String writtenBy;
         private List<AnswerDto.Response> answers;
     }
 
@@ -59,6 +60,7 @@ public class QuestionDto {
         private Long id;
         private String title;
         private String body;
+        private String writtenBy;
         private List<AnswerDto.Response> answers;
         private PageInfo pageInfos;
     }

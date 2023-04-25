@@ -6,7 +6,10 @@ import backend.com.backend.comment.entity.Comment;
 import backend.com.backend.comment.repository.CommentRepository;
 import backend.com.backend.exception.BusinessLogicException;
 import backend.com.backend.exception.ExceptionCode;
+import backend.com.backend.member.entity.Member;
+import backend.com.backend.member.repository.MemberRepository;
 import backend.com.backend.utils.CustomBeanUtils;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,19 +21,25 @@ import java.util.Optional;
 @Transactional
 public class CommentService {
     private final CommentRepository commentRepository;
-
+    private final MemberRepository memberRepository;
     private final AnswerService answerService;
     private final CustomBeanUtils<Comment> beanUtils;
 
-    public CommentService(CommentRepository commentRepository, AnswerService answerService, CustomBeanUtils<Comment> beanUtils) {
+    public CommentService(CommentRepository commentRepository, MemberRepository memberRepository, AnswerService answerService, CustomBeanUtils<Comment> beanUtils) {
         this.commentRepository = commentRepository;
+        this.memberRepository = memberRepository;
         this.answerService = answerService;
         this.beanUtils = beanUtils;
     }
 
-    public Comment createComment(Comment comment) {
+    public Comment createComment(Comment comment, UserDetails user) {
+        Optional<Member> member = memberRepository.findByEmail(user.getUsername());
+        Member findMember = member.orElseThrow(() -> new BusinessLogicException(ExceptionCode.MEMBER_NOT_FOUND));
+        //Comment 테이블에 있는 글쓴이 필드를 세팅해준다.
+        comment.setWrittenBy(findMember.getDisplayName());
        return commentRepository.save(comment);
     }
+
 
     public List<Comment> findComments(long answerId) {
         Answer answer = answerService.findVerifiedAnswer(answerId);

@@ -26,10 +26,8 @@ public class Answer extends Auditable {
     @Column(nullable = false, length = 10000)
     private String content;
 
-    @ManyToOne
-    @JoinColumn(name = "MEMBER_ID")
-    private Member member;
-
+    @Column
+    private String writtenBy;
 
 
     @JsonBackReference("question-answers")

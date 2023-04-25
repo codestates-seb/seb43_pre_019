@@ -30,6 +30,7 @@ public class AnswerDto {
     public static class Response {
         private long id;
         private String content;
+        private String writtenBy;
         private List<Comment> comments;
         private LocalDateTime createdAt;
         private LocalDateTime modifiedAt;

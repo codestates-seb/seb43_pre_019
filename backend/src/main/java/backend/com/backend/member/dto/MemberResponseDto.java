@@ -1,9 +1,14 @@
 
 package backend.com.backend.member.dto;
 
+import backend.com.backend.answer.entity.Answer;
+import backend.com.backend.question.entity.Question;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
+
+import java.util.List;
+
 @Getter
 @Builder
 @AllArgsConstructor
@@ -11,6 +16,8 @@ public class MemberResponseDto {
     private Long id;
     private String displayName;
     private String location;
+    private List<Question> questions;
+    private List<Answer> answers;
     private int totalQuestions;
     private int totalAnswers;
 

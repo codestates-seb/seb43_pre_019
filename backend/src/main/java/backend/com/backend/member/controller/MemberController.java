@@ -28,7 +28,7 @@ public class MemberController {
         this.memberMapper = memberMapper;
         this.memberService = memberService;
     }
-    @PostMapping
+    @PostMapping("/sign")
     public ResponseEntity postMember(@Valid @RequestBody MemberPostDto memberPostDto){// 회원가입
         Member member = memberMapper.MemberPostDtoToMember(memberPostDto);
         Member data= memberService.createMember(member);

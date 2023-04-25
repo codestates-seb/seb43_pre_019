@@ -22,10 +22,8 @@ public class Comment extends Auditable {
     @Column(nullable = false, length = 3000)
     private String text;
 
-    @ManyToOne
-    @JoinColumn(name = "MEMBER_ID")
-    private Member member;
-    //Member애서 코멘트로 접근할 필요는 없으니 Member엔티티에서 OneToMany는 하지 않는다.
+    @Column
+    private String writtenBy;
 
     @JsonBackReference("answer-comments")
     @ManyToOne

@@ -2,14 +2,15 @@ package backend.com.backend.comment.controller;
 
 import backend.com.backend.answer.entity.Answer;
 import backend.com.backend.answer.service.AnswerService;
+import backend.com.backend.auth.userdetails.MemberDetailsService;
 import backend.com.backend.comment.dto.CommentDto;
 import backend.com.backend.comment.entity.Comment;
 import backend.com.backend.comment.mapper.CommentMapper;
 import backend.com.backend.comment.service.CommentService;
-import backend.com.backend.member.service.MemberService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -25,22 +26,29 @@ public class CommentController {
     private final static String COMMENT_DEFAULT_URL = "/answers/{answer-id}/comments";
     private final CommentService commentService;
     private final AnswerService answerService;
+    private final MemberDetailsService memberDetailsService;
     private final CommentMapper mapper;
-    @Autowired
-    public CommentController(CommentService commentService, AnswerService answerService, CommentMapper mapper) {
+
+    public CommentController(CommentService commentService, AnswerService answerService, MemberDetailsService memberDetailsService, CommentMapper mapper) {
         this.commentService = commentService;
         this.answerService = answerService;
+        this.memberDetailsService = memberDetailsService;
         this.mapper = mapper;
     }
 
     @PostMapping
     public ResponseEntity postComment(@PathVariable("answer-id") long answerId,
-                                      @Valid @RequestBody CommentDto.Post requestBody) {
-        Answer answer = answerService.findVerifiedAnswer(answerId);
+                                      @Valid @RequestBody CommentDto.Post requestBody,
+                                      Authentication authentication) {
+        //아래 두 줄의 코드는 인증정보 Authentication을 바탕으로 유저 정보를 끌어낸다.
+        String username = authentication.getName();
+        UserDetails user = memberDetailsService.loadUserByUsername(username);
         Comment comment = mapper.commentPostDtoToComment(requestBody);
+        Answer relatedAnswer = answerService.findVerifiedAnswer(answerId);
+        relatedAnswer.setComment(comment);
+        //그리고는 service단으로 넘어가서 댓글이 save()되기 전 Member 외래키 필드를 채워주는 역할을 한다.
+        Comment createdComment = commentService.createComment(comment, user);
 
-        answer.setComment(comment);
-        Comment createdComment = commentService.createComment(comment);
 
         URI location = UriComponentsBuilder
                 .newInstance()
@@ -50,6 +58,7 @@ public class CommentController {
 
         return ResponseEntity.created(location).build();
     }
+
 
     @PatchMapping("/{comment-id}")
     public ResponseEntity patchComment(@PathVariable("comment-id") @Positive long commentId,
