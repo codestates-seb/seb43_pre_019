@@ -43,6 +43,7 @@ public class CommentController {
         //아래 두 줄의 코드는 인증정보 Authentication을 바탕으로 유저 정보를 끌어낸다.
         String username = authentication.getName();
         UserDetails user = memberDetailsService.loadUserByUsername(username);
+
         Comment comment = mapper.commentPostDtoToComment(requestBody);
         Answer relatedAnswer = answerService.findVerifiedAnswer(answerId);
         relatedAnswer.setComment(comment);
@@ -62,9 +63,15 @@ public class CommentController {
 
     @PatchMapping("/{comment-id}")
     public ResponseEntity patchComment(@PathVariable("comment-id") @Positive long commentId,
-                                       @Valid @RequestBody CommentDto.Patch requestBody) {
+                                       @Valid @RequestBody CommentDto.Patch requestBody,
+                                       Authentication authentication) {
         requestBody.setCommentId(commentId);
+        //아래 두 줄의 코드는 인증정보 Authentication을 바탕으로 유저 정보를 끌어낸다.
+        String username = authentication.getName();
+        UserDetails user = memberDetailsService.loadUserByUsername(username);
         Comment comment = mapper.commentPatchDtoToComment(requestBody);
+
+
         Comment updatedComment = commentService.updateComment(comment);
 
         return new ResponseEntity<>(mapper.commentToCommentResponseDto(updatedComment), HttpStatus.OK);
