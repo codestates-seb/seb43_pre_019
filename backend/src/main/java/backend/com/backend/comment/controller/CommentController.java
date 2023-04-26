@@ -20,10 +20,10 @@ import javax.validation.constraints.Positive;
 import java.net.URI;
 
 @RestController
-@RequestMapping("/answers/{answer-id}/comments")
+@RequestMapping("/api/answers/{answer-id}/comments")
 @Validated
 public class CommentController {
-    private final static String COMMENT_DEFAULT_URL = "/answers/{answer-id}/comments";
+    private final static String COMMENT_DEFAULT_URL = "/api/answers/{answer-id}/comments";
     private final CommentService commentService;
     private final AnswerService answerService;
     private final MemberDetailsService memberDetailsService;

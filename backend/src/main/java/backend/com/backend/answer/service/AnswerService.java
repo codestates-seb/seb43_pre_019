@@ -9,6 +9,8 @@ import backend.com.backend.member.repository.MemberRepository;
 import backend.com.backend.question.entity.Question;
 import backend.com.backend.utils.CustomBeanUtils;
 import org.springframework.data.domain.*;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -44,12 +46,19 @@ public class AnswerService {
         return answerRepository.save(answer);
     }
 
-    public Answer updateAnswer(Answer answer) {
+    public Answer updateAnswer(Answer answer, Authentication authentication) {
+        //요청자의 유저정보 이메일을 authentication으로부터 끌어온다.
+        String username = authentication.getName();
         Answer findAnswer = findVerifiedAnswer(answer.getId());
+        String originalUser = findAnswer.getMember().getEmail();
+        //두 개를 비교해서 같지 않다면 에러가 뜬다. 즉 원래 작성자에게만 허용된 요청이다.
+        if (!username.equals(originalUser)) {
+            throw new AccessDeniedException("해당 포스트의 작성자에게만 허용된 요청입니다.");
+        } else {
+            Answer updatedAnswer = beanUtils.copyNonNullProperties(answer, findAnswer);
 
-        Answer updatedAnswer = beanUtils.copyNonNullProperties(answer, findAnswer);
-
-        return answerRepository.save(updatedAnswer);
+            return answerRepository.save(updatedAnswer);
+        }
     }
 
     public List<Answer> findAnswers(long questionId) {
@@ -69,10 +78,20 @@ public class AnswerService {
         return findAnswer;
     }
 
-    public void clearAnswer(long answerId) {
-        Member findMember = findVerifiedAnswer(answerId).getMember();
-        findMember.setTotalAnswers(findMember.getTotalAnswers() - 1);
-        answerRepository.delete(findVerifiedAnswer(answerId));
+    public void clearAnswer(long answerId, Authentication authentication) {
+        Answer priorAnswer = findVerifiedAnswer(answerId);
+        Member findMember = priorAnswer.getMember();
+        //요청자의 유저정보 이메일을 authentication으로부터 끌어온다.
+        String username = authentication.getName();
+        //해당 포스트의 원래 유저의 이메일을 불러온다.
+        String originalUser = priorAnswer.getMember().getEmail();
+        //두 개를 비교해서 같지 않다면 에러가 뜬다. 즉 원래 작성자에게만 허용된 요청이다.
+        if(!username.equals(originalUser)) {
+            throw new AccessDeniedException("해당 포스트의 작성자에게만 허용된 요청입니다.");
+        } else {
+            findMember.setTotalAnswers(findMember.getTotalAnswers() - 1);
+            answerRepository.delete(findVerifiedAnswer(answerId));
+        }
     }
 
     public Page<Answer> makePageObject(int page, int size, List<Answer> answers) {

@@ -29,13 +29,13 @@ import java.util.stream.Collectors;
 import static java.util.Comparator.comparing;
 
 @RestController
-@RequestMapping("/questions/{id}/answers")
+@RequestMapping("/api/questions/{id}/answers")
 @Validated
 @Slf4j
 @CrossOrigin(origins = "*")
 public class AnswerController {
 
-    private final static String ANSWER_DEFAULT_URL = "/questions/{id}/answers";
+    private final static String ANSWER_DEFAULT_URL = "/api/questions/{id}/answers";
     private final AnswerService answerService;
 
     private final QuestionService questionService;
@@ -78,11 +78,12 @@ public class AnswerController {
 
     @PatchMapping("/{answer-id}")
     public ResponseEntity patchAnswer(@PathVariable("answer-id") @Positive long answerId,
-                                      @Valid @RequestBody AnswerDto.Patch requestBody) {
+                                      @Valid @RequestBody AnswerDto.Patch requestBody,
+                                      Authentication authentication) {
         requestBody.setId(answerId);
 
         Answer answer =
-                answerService.updateAnswer(answerMapper.answerPatchDtoToAnswer(requestBody));
+                answerService.updateAnswer(answerMapper.answerPatchDtoToAnswer(requestBody), authentication);
 
         return new ResponseEntity<>(answerMapper.answerToAnswerResponseDto(answer), HttpStatus.OK);
     }
@@ -95,8 +96,9 @@ public class AnswerController {
 
 
     @DeleteMapping("/{answer-id}")
-    public ResponseEntity deleteAnswer(@PathVariable("answer-id") @Positive long answerId) {
-        answerService.clearAnswer(answerId);
+    public ResponseEntity deleteAnswer(@PathVariable("answer-id") @Positive long answerId,
+                                       Authentication authentication) {
+        answerService.clearAnswer(answerId, authentication);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 

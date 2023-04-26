@@ -35,8 +35,6 @@ public class SecurityConfiguration {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-                .headers().frameOptions().sameOrigin() // (1)
-                .and()
                 .csrf().disable()        // (2)
                 .cors(withDefaults())    // (3)
                 .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)  // (1) 추가
@@ -46,16 +44,19 @@ public class SecurityConfiguration {
                 .apply(new CustomFilterConfigurer())
                 .and()
                 .authorizeHttpRequests(authorize -> authorize
-                        .antMatchers(HttpMethod.POST, "/members/sign").permitAll()
-                        .antMatchers(HttpMethod.POST, "/questions").hasAnyRole("USER", "ADMIN")
-                        .antMatchers(HttpMethod.POST, "/questions/*/answers").hasAnyRole("USER", "ADMIN")
-                        .antMatchers(HttpMethod.POST, "/answers/*/comments").hasAnyRole("USER", "ADMIN")
-                        .antMatchers(HttpMethod.PATCH, "/questions/*").hasAnyRole("USER", "ADMIN")
-                        .antMatchers(HttpMethod.PATCH, "/questions/*/answers/*").hasAnyRole("USER", "ADMIN")
-                        .antMatchers(HttpMethod.PATCH, "/answers/*/comments/*").hasAnyRole("USER", "ADMIN")
-                        .antMatchers(HttpMethod.DELETE, "/questions/*").hasAnyRole("USER", "ADMIN")
-                        .antMatchers(HttpMethod.DELETE, "/questions/*/answers/*").hasAnyRole("USER", "ADMIN")
-                        .antMatchers(HttpMethod.DELETE, "/answers/*/comments/*").hasAnyRole("USER", "ADMIN")
+                        .antMatchers(HttpMethod.POST, "/api/members/sign").permitAll()
+                        .antMatchers(HttpMethod.POST, "/api/questions").hasAnyRole("USER", "ADMIN")
+                        .antMatchers(HttpMethod.POST, "/api/questions/*/answers").hasAnyRole("USER", "ADMIN")
+                        .antMatchers(HttpMethod.POST, "/api/answers/*/comments").hasAnyRole("USER", "ADMIN")
+                        .antMatchers(HttpMethod.PATCH, "/api/questions/*").hasAnyRole("USER", "ADMIN")
+                        .antMatchers(HttpMethod.PATCH, "/api/questions/*/answers/*").hasAnyRole("USER", "ADMIN")
+                        .antMatchers(HttpMethod.PATCH, "/api/answers/*/comments/*").hasAnyRole("USER", "ADMIN")
+                        .antMatchers(HttpMethod.DELETE, "/api/questions/*").hasAnyRole("USER", "ADMIN")
+                        .antMatchers(HttpMethod.DELETE, "/api/questions/*/answers/*").hasAnyRole("USER", "ADMIN")
+                        .antMatchers(HttpMethod.DELETE, "/api/answers/*/comments/*").hasAnyRole("USER", "ADMIN")
+                        .antMatchers(HttpMethod.GET, "/api/questions/**").permitAll()
+                        .antMatchers(HttpMethod.GET, "/api/answers/{answer-id}/comments/**").permitAll()
+                        .antMatchers(HttpMethod.GET, "/api/member/**").permitAll()
                         .anyRequest().permitAll()
                 );
         return http.build();
@@ -84,7 +85,7 @@ public class SecurityConfiguration {
             AuthenticationManager authenticationManager = builder.getSharedObject(AuthenticationManager.class);  // (2-3)
 
             JwtAuthenticationFilter jwtAuthenticationFilter = new JwtAuthenticationFilter(authenticationManager, jwtTokenizer);  // (2-4)
-            jwtAuthenticationFilter.setFilterProcessesUrl("/members/login");          // (2-5)
+            jwtAuthenticationFilter.setFilterProcessesUrl("/api/members/login");          // (2-5)
 
             JwtVerificationFilter jwtVerificationFilter = new JwtVerificationFilter(jwtTokenizer, authorityUtils); //(2) 추가
 

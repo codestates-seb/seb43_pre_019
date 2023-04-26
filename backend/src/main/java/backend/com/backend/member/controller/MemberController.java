@@ -8,6 +8,7 @@ import backend.com.backend.member.service.MemberService;
 import backend.com.backend.utils.UriCreator;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -16,11 +17,11 @@ import javax.validation.constraints.Positive;
 import java.net.URI;
 
 @RestController
-@RequestMapping("/members")
+@RequestMapping("/api/members")
 @Validated
 @CrossOrigin(origins = "*")
 public class MemberController {
-    private final static String MEMBER_DEFAULT_URL = "/members";
+    private final static String MEMBER_DEFAULT_URL = "/api/members";
     private final MemberMapper memberMapper;
     private final MemberService memberService;
 
@@ -38,10 +39,11 @@ public class MemberController {
 
     @PatchMapping("/{member-id}")
     public ResponseEntity patchMember(@PathVariable("member-id") @Positive Long MemberId,
-                                    @Valid @RequestBody MemberPatchDto memberPatchDto){
+                                      @Valid @RequestBody MemberPatchDto memberPatchDto,
+                                      Authentication authentication){
         memberPatchDto.setId(MemberId);
         Member member = memberMapper.MemberPatchDtoToMember(memberPatchDto);
-        Member data = memberService.updateMember(member);
+        Member data = memberService.updateMember(member, authentication);
 
         return new ResponseEntity<>(memberMapper.MemberToResponseDto(data),HttpStatus.OK);
     }
@@ -59,8 +61,9 @@ public class MemberController {
 //        return null;
 //    }
     @DeleteMapping("/{member-id}")
-    public ResponseEntity deleteMember(@PathVariable("member-id") @Positive Long memberID){
-        Member data = memberService.deleteMember(memberID);
+    public ResponseEntity deleteMember(@PathVariable("member-id") @Positive Long memberID,
+                                       Authentication authentication){
+        Member data = memberService.deleteMember(memberID, authentication);
 
         return new ResponseEntity<>(memberMapper.MemberToResponseDto(data),HttpStatus.NO_CONTENT);
     }

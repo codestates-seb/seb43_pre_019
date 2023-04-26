@@ -8,6 +8,8 @@ import backend.com.backend.question.mapper.QuestionMapper;
 import backend.com.backend.question.service.QuestionService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.validation.annotation.Validated;
@@ -20,11 +22,11 @@ import java.net.URI;
 import java.util.List;
 
 @RestController
-@RequestMapping("/questions")
+@RequestMapping("/api/questions")
 @Validated
 @CrossOrigin(origins = "*")
 public class QuestionController {
-    private final static String QUESTION_DEFAULT_URL = "/questions";
+    private final static String QUESTION_DEFAULT_URL = "/api/questions";
     private final QuestionService questionService;
     private final MemberDetailsService memberDetailsService;
     private final QuestionMapper questionMapper;
@@ -57,12 +59,15 @@ public class QuestionController {
 
     @PatchMapping("/{question-id}")
     public ResponseEntity patchQuestion(@PathVariable("question-id") @Positive long questionId,
-                                        @Valid @RequestBody QuestionDto.Patch patchDto) {
+                                        @Valid @RequestBody QuestionDto.Patch patchDto,
+                                        Authentication authentication) {
+
         patchDto.setQuestionId(questionId);
+        Question question = questionMapper.questionPatchDtoToQuestion(patchDto);
 
-        Question question = questionService.updateQuestion(questionMapper.questionPatchDtoToQuestion(patchDto));
+        Question updatedQuestion = questionService.updateQuestion(question, authentication);
+        return new ResponseEntity<>(questionMapper.questionToQuestionResponseDto(updatedQuestion), HttpStatus.OK);
 
-        return new ResponseEntity<>(questionMapper.questionToQuestionResponseDto(question), HttpStatus.OK);
     }
 
     @GetMapping("/{question-id}")
@@ -91,8 +96,9 @@ public class QuestionController {
     }
 
     @DeleteMapping("/{question-id}")
-    public ResponseEntity deleteQuestion(@PathVariable("question-id") @Positive long questionId) {
-        questionService.deleteQuestion(questionId);
+    public ResponseEntity deleteQuestion(@PathVariable("question-id") @Positive long questionId,
+                                         Authentication authentication) {
+        questionService.deleteQuestion(questionId, authentication);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 }

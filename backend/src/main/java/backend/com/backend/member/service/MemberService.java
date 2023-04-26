@@ -8,6 +8,8 @@ import backend.com.backend.member.repository.MemberRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -46,25 +48,31 @@ public class MemberService {
 
 
 
-    public Member updateMember(Member member){//추가 해야함
+    public Member updateMember(Member member, Authentication authentication){//추가 해야함
         //유저 존재 유무 확인
         Member findMember = findVerifiedMember(member.getId());
 
-        Optional.ofNullable(member.getFullName())
-                .ifPresent(fullName -> findMember.setFullName(fullName));
-        Optional.ofNullable(member.getDisplayName())
-                .ifPresent(displayName->findMember.setDisplayName(displayName));
-        Optional.ofNullable(member.getLocation())
-                .ifPresent(location->findMember.setLocation(location));
-        Optional.ofNullable(member.getDisplayName())
-                .ifPresent(displayName->findMember.setDisplayName(displayName));
-        Optional.ofNullable(member.getMemberStatus())
-                .ifPresent(memberStatus->findMember.setMemberStatus(memberStatus));
+        String originalUser = findMember.getEmail();
+        String user = authentication.getName();
 
-        //추후 수정
+        if(!user.equals(originalUser)) {
+            throw new AccessDeniedException("회원 프로필은 본인만 수정할 수 있습니다.");
+        } else {
+            Optional.ofNullable(member.getFullName())
+                    .ifPresent(fullName -> findMember.setFullName(fullName));
+            Optional.ofNullable(member.getDisplayName())
+                    .ifPresent(displayName -> findMember.setDisplayName(displayName));
+            Optional.ofNullable(member.getLocation())
+                    .ifPresent(location -> findMember.setLocation(location));
+            Optional.ofNullable(member.getDisplayName())
+                    .ifPresent(displayName -> findMember.setDisplayName(displayName));
+            Optional.ofNullable(member.getMemberStatus())
+                    .ifPresent(memberStatus -> findMember.setMemberStatus(memberStatus));
+
+            //추후 수정
 //        finduser.getModifiedAt()
-        return memberRepository.save(findMember);
-
+            return memberRepository.save(findMember);
+        }
     }
     @Transactional(readOnly = true)
     public Member findMember(long userId){
@@ -74,10 +82,16 @@ public class MemberService {
     public Page<Member> findMembers(int page, int size){
         return memberRepository.findAll(PageRequest.of(page,size, Sort.by("Id").descending()));
     }
-    public Member deleteMember(long userId){
+    public Member deleteMember(long userId, Authentication authentication){
         Member finduser = findVerifiedMember(userId);
-        finduser.setMemberStatus(Member.MemberStatus.MEMBER_QUIT);
-        return finduser;
+        String originalUser = finduser.getEmail();
+        String user = authentication.getName();
+        if(!user.equals(originalUser)) {
+            throw new AccessDeniedException("회원계정은 본인만 제어할 수 있습니다.");
+        } else {
+            finduser.setMemberStatus(Member.MemberStatus.MEMBER_QUIT);
+            return finduser;
+        }
     }
     @Transactional(readOnly = true)
     public Member findVerifiedMember(long memberId){
