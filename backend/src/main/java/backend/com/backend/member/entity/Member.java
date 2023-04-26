@@ -6,6 +6,7 @@ import javax.persistence.*;
 import backend.com.backend.answer.entity.Answer;
 import backend.com.backend.audit.Auditable;
 import backend.com.backend.question.entity.Question;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import lombok.Getter;
@@ -55,6 +56,7 @@ public class Member extends Auditable {
 //    private List<Comment> comment;
     @OneToMany(mappedBy = "member", cascade = CascadeType.ALL)
     @JsonManagedReference
+    @JsonIgnoreProperties("answers")
     private List<Question> questions = new ArrayList<>();
 
     public void setQuestion(Question question) {
@@ -66,6 +68,7 @@ public class Member extends Auditable {
     }
     @OneToMany(mappedBy = "member", cascade = CascadeType.ALL)
     @JsonManagedReference
+    @JsonIgnoreProperties("comments")
     private List<Answer> answers = new ArrayList<>();
 
     public void setAnswer(Answer answer) {

@@ -9,6 +9,7 @@ import lombok.Setter;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
+import java.time.LocalDateTime;
 import java.util.List;
 
 public class QuestionDto {
@@ -50,6 +51,8 @@ public class QuestionDto {
         private String title;
         private String body;
         private String writtenBy;
+        private LocalDateTime createdAt;
+        private LocalDateTime modifiedAt;
         private List<AnswerDto.Response> answers;
     }
 
@@ -61,6 +64,8 @@ public class QuestionDto {
         private String title;
         private String body;
         private String writtenBy;
+        private LocalDateTime createdAt;
+        private LocalDateTime modifiedAt;
         private List<AnswerDto.Response> answers;
         private PageInfo pageInfos;
     }
