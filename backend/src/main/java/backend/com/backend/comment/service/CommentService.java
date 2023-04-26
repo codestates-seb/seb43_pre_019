@@ -39,6 +39,7 @@ public class CommentService {
         Member findMember = member.orElseThrow(() -> new BusinessLogicException(ExceptionCode.MEMBER_NOT_FOUND));
         //Comment 테이블에 있는 글쓴이 필드를 세팅해준다.
         comment.setWrittenBy(findMember.getDisplayName());
+        findMember.setComment(comment);
        return commentRepository.save(comment);
     }
 
@@ -51,8 +52,7 @@ public class CommentService {
 
     public Comment updateComment(Comment comment, Authentication authentication) {
         //아래 코드는 인증정보 Authentication을 바탕으로 유저 정보를 끌어낸다.
-        Optional<Member> optionalMember = memberRepository.findByDisplayName(findVerifiedComment(comment.getId()).getWrittenBy());
-        Member findMember = optionalMember.orElseThrow(() -> new BusinessLogicException(ExceptionCode.MEMBER_NOT_FOUND));
+        Member findMember = findVerifiedComment(comment.getId()).getMember();
         String originalUser = findMember.getEmail();
         String user = authentication.getName();
 
@@ -77,8 +77,7 @@ public class CommentService {
     public void clearComment(long commentId, Authentication authentication) {
         Comment findComment = findVerifiedComment(commentId);
         String user = authentication.getName();
-        Optional<Member> optionalMember = memberRepository.findByDisplayName(findComment.getWrittenBy());
-        Member findMember = optionalMember.orElseThrow(() -> new BusinessLogicException(ExceptionCode.MEMBER_NOT_FOUND));
+        Member findMember = findComment.getMember();
         String originalUser = findMember.getEmail();
         if(!user.equals(originalUser)) {
             throw new AccessDeniedException("댓글의 삭제는 원래 작성자만 가능합니다.");

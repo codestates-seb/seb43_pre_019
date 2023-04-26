@@ -50,6 +50,7 @@ public class AnswerService {
         //요청자의 유저정보 이메일을 authentication으로부터 끌어온다.
         String username = authentication.getName();
         Answer findAnswer = findVerifiedAnswer(answer.getId());
+
         String originalUser = findAnswer.getMember().getEmail();
         //두 개를 비교해서 같지 않다면 에러가 뜬다. 즉 원래 작성자에게만 허용된 요청이다.
         if (!username.equals(originalUser)) {

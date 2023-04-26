@@ -17,13 +17,13 @@ public class CommentDto {
     @Getter
     @Setter
     public static class Patch {
-        private long commentId;
+        private Long id;
 
         @NotBlank(message = "댓글내용을 입력해주세요.")
         private String text;
 
         public void setCommentId(long commentId) {
-            this.commentId = commentId;
+            this.id = commentId;
         }
     }
     @Getter

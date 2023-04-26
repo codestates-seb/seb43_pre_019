@@ -5,6 +5,7 @@ import javax.persistence.*;
 
 import backend.com.backend.answer.entity.Answer;
 import backend.com.backend.audit.Auditable;
+import backend.com.backend.comment.entity.Comment;
 import backend.com.backend.question.entity.Question;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -78,8 +79,17 @@ public class Member extends Auditable {
             answer.setMember(this);
         }
     }
-    /*@OneToMany
-    private Comment comment;*/
+    @OneToMany(mappedBy = "member")
+    @JsonManagedReference
+    @JsonIgnoreProperties({"member", "answer"})
+    private List<Comment> comments;
+
+    public void setComment(Comment comment) {
+        comments.add(comment);
+        if(comment.getMember() != this){
+            comment.setMember(this);
+        }
+    }
 
     /*@OneToMany
     private User_anal useranal;*/

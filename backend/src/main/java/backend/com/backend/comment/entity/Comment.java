@@ -4,6 +4,7 @@ import backend.com.backend.answer.entity.Answer;
 import backend.com.backend.audit.Auditable;
 import backend.com.backend.member.entity.Member;
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -24,6 +25,12 @@ public class Comment extends Auditable {
 
     @Column
     private String writtenBy;
+
+    @ManyToOne
+    @JsonBackReference
+    @JoinColumn(name = "MEMBER_ID")
+    @JsonIgnoreProperties({"email", "fullName", "displayName", "password", "location", "totalQuestions", "totalAnswers", "roles", "questions", "answers"})
+    private Member member;
 
     @JsonBackReference("answer-comments")
     @ManyToOne
