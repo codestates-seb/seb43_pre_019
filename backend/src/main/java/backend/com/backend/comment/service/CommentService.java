@@ -9,6 +9,8 @@ import backend.com.backend.exception.ExceptionCode;
 import backend.com.backend.member.entity.Member;
 import backend.com.backend.member.repository.MemberRepository;
 import backend.com.backend.utils.CustomBeanUtils;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -47,11 +49,21 @@ public class CommentService {
        return comments;
     }
 
-    public Comment updateComment(Comment comment) {
-        Comment findComment = findVerifiedComment(comment.getId());
-        Comment updatedComment = beanUtils.copyNonNullProperties(comment, findComment);
+    public Comment updateComment(Comment comment, Authentication authentication) {
+        //아래 코드는 인증정보 Authentication을 바탕으로 유저 정보를 끌어낸다.
+        Optional<Member> optionalMember = memberRepository.findByDisplayName(findVerifiedComment(comment.getId()).getWrittenBy());
+        Member findMember = optionalMember.orElseThrow(() -> new BusinessLogicException(ExceptionCode.MEMBER_NOT_FOUND));
+        String originalUser = findMember.getEmail();
+        String user = authentication.getName();
 
-        return commentRepository.save(updatedComment);
+        if(!originalUser.equals(user)) {
+            throw new AccessDeniedException("댓글은 원래 작성자만 수정이 가능합니다.");
+        } else {
+            Comment findComment = findVerifiedComment(comment.getId());
+            Comment updatedComment = beanUtils.copyNonNullProperties(comment, findComment);
+
+            return commentRepository.save(updatedComment);
+        }
     }
     public Comment findVerifiedComment(long commentId) {
         Optional<Comment> optionalComment = commentRepository.findById(commentId);
@@ -62,7 +74,16 @@ public class CommentService {
         return findComment;
     }
 
-    public void clearComment(long commentId) {
-        commentRepository.delete(findVerifiedComment(commentId));
+    public void clearComment(long commentId, Authentication authentication) {
+        Comment findComment = findVerifiedComment(commentId);
+        String user = authentication.getName();
+        Optional<Member> optionalMember = memberRepository.findByDisplayName(findComment.getWrittenBy());
+        Member findMember = optionalMember.orElseThrow(() -> new BusinessLogicException(ExceptionCode.MEMBER_NOT_FOUND));
+        String originalUser = findMember.getEmail();
+        if(!user.equals(originalUser)) {
+            throw new AccessDeniedException("댓글의 삭제는 원래 작성자만 가능합니다.");
+        } else {
+            commentRepository.delete(findComment);
+        }
     }
 }

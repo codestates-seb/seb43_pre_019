@@ -16,7 +16,6 @@ import java.util.List;
 public class MemberResponseDto {
     private Long id;
     private String displayName;
-    private String location;
     @JsonIgnoreProperties("answers")
     private List<Question> questions;
     @JsonIgnoreProperties("comments")

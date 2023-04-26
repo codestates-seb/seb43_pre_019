@@ -15,10 +15,6 @@ public class MemberPostDto {
     private String email;
     @NotBlank(message = "이름은 공백이 아니어야 합니다.")
     private String displayName;
-    @Column(nullable = false)
-    private String fullName;
     @Column
     private String password;
-    @Column(updatable = false)
-    private String location;
 }

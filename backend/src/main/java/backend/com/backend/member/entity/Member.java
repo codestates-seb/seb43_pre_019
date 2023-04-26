@@ -26,13 +26,13 @@ public class Member extends Auditable {
     private long id;
     @Column(nullable = false, updatable = false, unique = true)
     private String email;
-    @Column(nullable = false)
+    @Column(nullable = true)
     private String fullName;
     @Column(nullable = false, unique = true)
     private String displayName;
     @Column(nullable = false, length = 100)
     private String password;
-    @Column(updatable = false)
+    @Column(updatable = true)
     private String location;
 
     @Column
