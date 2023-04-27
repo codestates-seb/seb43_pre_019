@@ -73,7 +73,7 @@ public class QuestionController {
     @GetMapping("/{question-id}")
     public ResponseEntity getQuestion(@PathVariable("question-id") @Positive long questionId,
                                       @Positive @RequestParam(defaultValue = "1") int page,
-                                      @Positive @RequestParam(defaultValue = "3") int size,
+                                      @Positive @RequestParam(defaultValue = "10") int size,
                                       @RequestParam(defaultValue = "newest") String sortOption) {
         Question question = questionService.findQuestion(questionId);
 

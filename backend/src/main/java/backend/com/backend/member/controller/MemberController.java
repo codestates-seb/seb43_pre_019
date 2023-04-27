@@ -1,9 +1,13 @@
 package backend.com.backend.member.controller;
 
+import backend.com.backend.exception.BusinessLogicException;
+import backend.com.backend.exception.ExceptionCode;
+import backend.com.backend.member.dto.MemberInfoDto;
 import backend.com.backend.member.dto.MemberPatchDto;
 import backend.com.backend.member.dto.MemberPostDto;
 import backend.com.backend.member.entity.Member;
 import backend.com.backend.member.mapper.MemberMapper;
+import backend.com.backend.member.repository.MemberRepository;
 import backend.com.backend.member.service.MemberService;
 import backend.com.backend.utils.UriCreator;
 import org.springframework.http.HttpStatus;
@@ -15,6 +19,8 @@ import org.springframework.web.bind.annotation.*;
 import javax.validation.Valid;
 import javax.validation.constraints.Positive;
 import java.net.URI;
+import java.util.Map;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/members")
@@ -24,11 +30,14 @@ public class MemberController {
     private final static String MEMBER_DEFAULT_URL = "/api/members";
     private final MemberMapper memberMapper;
     private final MemberService memberService;
+    private final MemberRepository memberRepository;
 
-    public MemberController(MemberMapper memberMapper, MemberService memberService) {
+    public MemberController(MemberMapper memberMapper, MemberService memberService, MemberRepository memberRepository) {
         this.memberMapper = memberMapper;
         this.memberService = memberService;
+        this.memberRepository = memberRepository;
     }
+
     @PostMapping("/sign")
     public ResponseEntity postMember(@Valid @RequestBody MemberPostDto memberPostDto){// 회원가입
         Member member = memberMapper.MemberPostDtoToMember(memberPostDto);
@@ -60,6 +69,17 @@ public class MemberController {
 //        List<User> users = pageusers.getContent();
 //        return null;
 //    }
+
+    @GetMapping("/info")
+    public ResponseEntity getMemberInfo(Authentication authentication) {
+        String emailOfDemander = authentication.getName();
+        Optional<Member> optionalMember = memberRepository.findByEmail(emailOfDemander);
+        Member findMember = optionalMember.orElseThrow(() -> new BusinessLogicException(ExceptionCode.MEMBER_NOT_FOUND));
+
+        long id = findMember.getId();
+        String displayName = findMember.getDisplayName();
+        return new ResponseEntity(new MemberInfoDto(id, displayName), HttpStatus.OK);
+    }
     @DeleteMapping("/{member-id}")
     public ResponseEntity deleteMember(@PathVariable("member-id") @Positive Long memberID,
                                        Authentication authentication){

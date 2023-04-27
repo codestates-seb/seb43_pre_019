@@ -45,6 +45,7 @@ public class SecurityConfiguration {
                 .and()
                 .authorizeHttpRequests(authorize -> authorize
                         .antMatchers(HttpMethod.POST, "/api/members/sign").permitAll()
+                        .antMatchers(HttpMethod.POST, "/api/members/login").permitAll()
                         .antMatchers(HttpMethod.POST, "/api/questions").hasAnyRole("USER", "ADMIN")
                         .antMatchers(HttpMethod.POST, "/api/questions/*/answers").hasAnyRole("USER", "ADMIN")
                         .antMatchers(HttpMethod.POST, "/api/answers/*/comments").hasAnyRole("USER", "ADMIN")
@@ -54,6 +55,7 @@ public class SecurityConfiguration {
                         .antMatchers(HttpMethod.DELETE, "/api/questions/*").hasAnyRole("USER", "ADMIN")
                         .antMatchers(HttpMethod.DELETE, "/api/questions/*/answers/*").hasAnyRole("USER", "ADMIN")
                         .antMatchers(HttpMethod.DELETE, "/api/answers/*/comments/*").hasAnyRole("USER", "ADMIN")
+                        .antMatchers(HttpMethod.GET, "api/members/info").hasAnyRole("USER", "ADMIN")
                         .antMatchers(HttpMethod.GET, "/api/questions/**").permitAll()
                         .antMatchers(HttpMethod.GET, "/api/answers/{answer-id}/comments/**").permitAll()
                         .antMatchers(HttpMethod.GET, "/api/member/**").permitAll()
